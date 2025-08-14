@@ -1,0 +1,175 @@
+name: Design Patterns Test Automation CI/CD
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        browser: [chrome, firefox]
+        java-version: [17]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up JDK ${{ matrix.java-version }}
+      uses: actions/setup-java@v4
+      with:
+        java-version: ${{ matrix.java-version }}
+        distribution: 'temurin'
+        
+    - name: Cache Maven dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.m2
+        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+        restore-keys: ${{ runner.os }}-m2
+        
+    - name: Setup Chrome
+      if: matrix.browser == 'chrome'
+      uses: browser-actions/setup-chrome@v1
+      
+    - name: Setup Firefox
+      if: matrix.browser == 'firefox'
+      uses: browser-actions/setup-firefox@v1
+      
+    - name: Start Xvfb
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y xvfb
+        export DISPLAY=:99
+        Xvfb :99 -ac -screen 0 1280x1024x8 &
+        
+    - name: Compile projects
+      run: mvn clean compile -DskipTests
+      
+    - name: Run tests
+      run: |
+        export DISPLAY=:99
+        mvn clean test -Dbrowser=${{ matrix.browser }} -Dheadless=true -P ci
+      env:
+        BROWSER: ${{ matrix.browser }}
+        HEADLESS: true
+        
+    - name: Generate Allure Report
+      if: always()
+      run: |
+        mvn allure:report
+        
+    - name: Upload Test Results
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-results-${{ matrix.browser }}-java${{ matrix.java-version }}
+        path: |
+          **/target/surefire-reports/
+          **/target/allure-results/
+          **/target/site/allure-maven-plugin/
+          **/target/extent-reports/
+          **/target/screenshots/
+          
+    - name: Upload Allure Results
+      if: always()
+      uses: simple-elf/allure-report-action@master
+      with:
+        allure_results: target/allure-results
+        allure_report: allure-report
+        gh_pages: gh-pages
+        allure_history: allure-history
+        keep_reports: 20
+        
+    - name: Deploy Allure Report to GitHub Pages
+      if: always() && github.ref == 'refs/heads/main' && matrix.browser == 'chrome'
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: allure-report
+        destination_dir: allure-report
+        
+    - name: Notify Slack on Failure
+      if: failure()
+      uses: 8398a7/action-slack@v3
+      with:
+        status: failure
+        channel: '#test-automation'
+        webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+        
+  security-scan:
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+        
+    - name: Upload Trivy scan results
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: 'trivy-results.sarif'
+        
+  performance-test:
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        
+    - name: Run Performance Tests
+      run: mvn clean test -Dtest=**/*PerformanceTest -Dheadless=true
+      
+    - name: Upload Performance Results
+      uses: actions/upload-artifact@v3
+      with:
+        name: performance-results
+        path: target/performance-reports/
+        
+  docker-build:
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+      
+    - name: Login to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+        
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v4
+      with:
+        context: .
+        push: true
+        tags: |
+          ${{ secrets.DOCKER_USERNAME }}/design-patterns-automation:latest
+          ${{ secrets.DOCKER_USERNAME }}/design-patterns-automation:${{ github.sha }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max

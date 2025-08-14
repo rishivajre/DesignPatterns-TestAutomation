@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<suite name="DesignPatternsTestSuite" parallel="tests" thread-count="3">
+    <parameter name="browser" value="chrome"/>
+    <parameter name="headless" value="false"/>
+    
+    <listeners>
+        <listener class-name="com.testautomation.common.listeners.TestListener"/>
+        <listener class-name="com.testautomation.common.listeners.ScreenshotListener"/>
+        <listener class-name="io.qameta.allure.testng.AllureTestNg"/>
+    </listeners>
+
+    <test name="SingletonPatternTests" parallel="methods" thread-count="2">
+        <classes>
+            <class name="com.testautomation.singleton.tests.FlightSearchTest"/>
+            <class name="com.testautomation.singleton.tests.BookingCalendarTest"/>
+        </classes>
+    </test>
+
+    <test name="FactoryPatternTests" parallel="methods" thread-count="2">
+        <classes>
+            <class name="com.testautomation.factory.tests.LoginTest"/>
+            <class name="com.testautomation.factory.tests.DashboardTest"/>
+        </classes>
+    </test>
+
+    <test name="BuilderPatternTests" parallel="methods" thread-count="2">
+        <classes>
+            <class name="com.testautomation.builder.tests.UserRegistrationTest"/>
+            <class name="com.testautomation.builder.tests.ProfileEditTest"/>
+        </classes>
+    </test>
+
+    <test name="StrategyPatternTests" parallel="methods" thread-count="2">
+        <classes>
+            <class name="com.testautomation.strategy.tests.ProductSearchTest"/>
+        </classes>
+    </test>
+
+    <test name="DecoratorPatternTests" parallel="methods" thread-count="2">
+        <classes>
+            <class name="com.testautomation.decorator.tests.BookingTest"/>
+        </classes>
+    </test>
+
+    <test name="ObserverPatternTests" parallel="methods" thread-count="2">
+        <classes>
+            <class name="com.testautomation.observer.tests.RealtimeReportingTest"/>
+        </classes>
+    </test>
+
+    <test name="CommandPatternTests" parallel="methods" thread-count="2">
+        <classes>
+            <class name="com.testautomation.command.tests.TestCommandExecutionTest"/>
+        </classes>
+    </test>
+
+    <test name="ChainPatternTests" parallel="methods" thread-count="2">
+        <classes>
+            <class name="com.testautomation.chain.tests.ValidationChainTest"/>
+        </classes>
+    </test>
+
+    <test name="AdapterPatternTests" parallel="methods" thread-count="2">
+        <classes>
+            <class name="com.testautomation.adapter.tests.ReportingIntegrationTest"/>
+        </classes>
+    </test>
+
+    <test name="TemplatePatternTests" parallel="methods" thread-count="2">
+        <classes>
+            <class name="com.testautomation.template.tests.TestTemplateExecutionTest"/>
+        </classes>
+    </test>
+
+    <test name="PageObjectPatternTests" parallel="methods" thread-count="2">
+        <classes>
+            <class name="com.testautomation.pageobject.tests.LinkValidationTest"/>
+            <class name="com.testautomation.pageobject.tests.ImageValidationTest"/>
+            <class name="com.testautomation.pageobject.tests.FunctionalTest"/>
+        </classes>
+    </test>
+</suite>

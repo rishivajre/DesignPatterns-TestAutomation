@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<suite name="SingletonPatternTestSuite" parallel="methods" thread-count="2">
+    <parameter name="browser" value="chrome"/>
+    <parameter name="headless" value="false"/>
+    
+    <listeners>
+        <listener class-name="io.qameta.allure.testng.AllureTestNg"/>
+    </listeners>
+    
+    <test name="SingletonPatternTests">
+        <classes>
+            <class name="com.testautomation.singleton.tests.SingletonPatternTest"/>
+            <class name="com.testautomation.singleton.tests.FlightSearchTest"/>
+            <class name="com.testautomation.singleton.tests.BookingCalendarTest"/>
+        </classes>
+    </test>
+</suite>
