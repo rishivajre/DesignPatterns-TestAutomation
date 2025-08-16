@@ -29,12 +29,13 @@ import lombok.extern.log4j.Log4j2;
  * - Support for local and remote execution
  * - Automatic browser setup with WebDriverManager
  * 
- * @author Senior SDET
+ * @author Sr SDET - Rishikesh Vajre
  */
 @Log4j2
 public class WebDriverSingleton implements Serializable, Cloneable {
     
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L; 
+    // Added for serialization, what it does is to ensure that the same instance is deserialized
     private static volatile WebDriverSingleton instance;
     private static final Object lock = new Object();
     
